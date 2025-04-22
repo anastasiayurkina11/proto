@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умный кредитный калькулятор с матрицей решений</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #01babd;
+            --secondary-color: #078288;
+            --error-color: #ea4335;
+            --warning-color: #fbbc05;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #202124;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 4px;
+            outline: none;
+            margin: 15px 0;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -10px;
+        }
+        
+        .value-box {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #065b60;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background-color: #e8f0fe;
+            display: none;
+        }
+        
+        .result h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dae0e6;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .personal-info {
+            margin-bottom: 25px;
+        }
+        
+        .personal-info input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .matrix-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+        }
+        
+        .matrix-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .matrix-table th, .matrix-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .matrix-table th {
+            background-color: #e0e0e0;
+            font-weight: 500;
+        }
+        
+        .approved {
+            background-color: rgba(52, 168, 83, 0.2);
+        }
+        
+        .declined {
+            background-color: rgba(234, 67, 53, 0.2);
+        }
+        
+        .warning {
+            background-color: rgba(251, 188, 5, 0.2);
+        }
+        
+        .term-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .term-option {
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            background-color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .term-option:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .term-option.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .recommendation {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: rgba(66, 133, 244, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .recommendation h3 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Кредитный калькулятор с матрицей решений</h1>
+        
+        <div class="card">
+            <div class="personal-info">
+                <div class="form-group">
+                    <label for="inn">ИНН (10 или 12 цифр)</label>
+                    <input type="text" id="inn" placeholder="7712345678 или 771234567890" maxlength="12">
+                    <small>Мы проверим ваш ИНН в налоговой и кредитных бюро</small>
+                </div>
+            </div>
+            
+            <button id="getLimitsBtn" class="btn">Проверить кредитные возможности</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Запрашиваем данные из налоговой и кредитных бюро...</p>
+            </div>
+            
+            <div class="error-message" id="errorMessage">
+                Произошла ошибка при получении данных. Пожалуйста, попробуйте позже.
+            </div>
+        </div>
+        
+        <div class="card" id="calculator" style="display: none;">
+            <div class="recommendation" id="recommendation">
+                <h3>Рекомендация по кредиту</h3>
+                <p id="recommendationText">На основании ваших данных мы подобрали оптимальные условия</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="loanAmount">Сумма кредита, ₽</label>
+                <div class="input-group">
+                    <input type="range" id="loanAmount" min="0" max="10000000" step="10000" value="500000">
+                </div>
+                <div class="value-display">
+                    <span id="minAmountValue">0 ₽</span>
+                    <div class="value-box" id="loanAmountValue">500 000 ₽</div>
+                    <span id="maxAmountValue">10 000 000 ₽</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="loanTerm">Срок кредита (месяцев)</label>
+                <div class="term-options" id="termOptions">
+                    <!-- Динамически заполняем варианты сроков -->
+                </div>
+                <div class="input-group">
+                    <input type="range" id="loanTerm" min="6" max="120" step="1" value="36">
+                </div>
+                <div class="value-display">
+                    <span id="minTermValue">6 мес</span>
+                    <div class="value-box" id="loanTermValue">36 мес</div>
+                    <span id="maxTermValue">120 мес</span>
+                </div>
+            </div>
+            
+            <button id="calculateBtn" class="btn">Рассчитать платеж</button>
+            
+            <div class="result" id="result">
+                <h2>Результаты расчета</h2>
+                <div class="result-item">
+                    <span>Ежемесячный платеж:</span>
+                    <strong id="monthlyPayment">-</strong>
+                </div>
+                <div class="result-item">
+                    <span>Общая сумма выплат:</span>
+                    <strong id="totalPayment">-</strong>
+                </div>
+                <div class="result-item">
+                    <span>Переплата:</span>
+                    <strong id="overpayment">-</strong>
+                </div>
+                <div class="result-item">
+                    <span>Процентная ставка:</span>
+                    <strong id="interestRate">-</strong>
+                </div>
+                <div class="result-item">
+                    <span>Ваш кредитный рейтинг:</span>
+                    <strong id="creditScore">-</strong>
+                </div>
+            </div>
+            
+            <div class="matrix-info">
+                <h3>Матрица кредитных решений</h3>
+                <p>На основе ваших данных система определила следующие возможные условия:</p>
+                <table class="matrix-table" id="decisionMatrix">
+                    <thead>
+                        <tr>
+                            <th>Срок \ Сумма</th>
+                            <!-- Заголовки сумм будут добавлены динамически -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Строки матрицы будут добавлены динамически -->
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; font-size: 12px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: rgba(52, 168, 83, 0.2); margin-right: 5px;"></span> - Одобрено
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: rgba(251, 188, 5, 0.2); margin-right: 5px; margin-left: 10px;"></span> - Под вопросом
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: rgba(234, 67, 53, 0.2); margin-right: 5px; margin-left: 10px;"></span> - Отклонено
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы интерфейса
+            const getLimitsBtn = document.getElementById('getLimitsBtn');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const calculator = document.getElementById('calculator');
+            const result = document.getElementById('result');
+            const termOptions = document.getElementById('termOptions');
+            const recommendationText = document.getElementById('recommendationText');
+            const decisionMatrix = document.getElementById('decisionMatrix');
+            
+            // Элементы для суммы кредита
+            const loanAmount = document.getElementById('loanAmount');
+            const loanAmountValue = document.getElementById('loanAmountValue');
+            const maxAmountValue = document.getElementById('maxAmountValue');
+            const minAmountValue = document.getElementById('minAmountValue');
+            
+            // Элементы для срока кредита
+            const loanTerm = document.getElementById('loanTerm');
+            const loanTermValue = document.getElementById('loanTermValue');
+            const maxTermValue = document.getElementById('maxTermValue');
+            const minTermValue = document.getElementById('minTermValue');
+            
+            // Элементы результатов
+            const monthlyPayment = document.getElementById('monthlyPayment');
+            const totalPayment = document.getElementById('totalPayment');
+            const overpayment = document.getElementById('overpayment');
+            const interestRateEl = document.getElementById('interestRate');
+            const creditScore = document.getElementById('creditScore');
+            
+            // Переменные для хранения данных
+            let creditData = null;
+            let currentTerm = 36;
+            let currentAmount = 500000;
+            let currentRate = 12;
+            
+            // Форматирование чисел
+            function formatNumber(num) {
+                return new Intl.NumberFormat('ru-RU').format(num);
+            }
+            
+            // Генерация случайного ИНН
+            function generateRandomINN() {
+                const length = Math.random() > 0.5 ? 10 : 12;
+                let inn = '';
+                for (let i = 0; i < length; i++) {
+                    inn += Math.floor(Math.random() * 10);
+                }
+                return inn;
+            }
+            
+            // Обновление отображаемых значений
+            function updateValues() {
+                loanAmountValue.textContent = `${formatNumber(loanAmount.value)} ₽`;
+                loanTermValue.textContent = `${loanTerm.value} мес`;
+                currentTerm = parseInt(loanTerm.value);
+                currentAmount = parseInt(loanAmount.value);
+                
+                // Обновляем активную кнопку срока
+                document.querySelectorAll('.term-option').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.term) === currentTerm) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Обновляем процентную ставку на основе выбранных параметров
+                updateInterestRate();
+            }
+            
+            // Обновление процентной ставки на основе матрицы решений
+            function updateInterestRate() {
+                if (!creditData || !creditData.matrix) return;
+                
+                // Находим ближайший срок в матрице
+                const terms = Object.keys(creditData.matrix).map(Number).sort((a, b) => a - b);
+                let closestTerm = terms[0];
+                for (const term of terms) {
+                    if (term <= currentTerm) {
+                        closestTerm = term;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Находим ближайшую сумму в матрице
+                const amounts = Object.keys(creditData.matrix[closestTerm]).map(Number).sort((a, b) => a - b);
+                let closestAmount = amounts[0];
+                for (const amount of amounts) {
+                    if (amount <= currentAmount) {
+                        closestAmount = amount;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Получаем ставку из матрицы
+                const matrixCell = creditData.matrix[closestTerm][closestAmount];
+                if (matrixCell && matrixCell.rate) {
+                    currentRate = matrixCell.rate;
+                    interestRateEl.textContent = `${currentRate}% годовых`;
+                }
+            }
+            
+            // Имитация запроса к скоринговой системе
+            function getScoringData(inn) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // 10% шанс ошибки для демонстрации
+                        if (Math.random() < 0.1) {
+                            reject(new Error('Ошибка подключения к налоговой службе'));
+                            return;
+                        }
+                        
+                        // Генерируем случайные данные клиента на основе ИНН
+                        const rnd = parseInt(inn.substr(0, 4)) % 100;
+                        
+                        // Определяем "категорию" клиента
+                        let clientType;
+                        if (rnd < 20) {
+                            clientType = 'low'; // 20% - низкий доход
+                        } else if (rnd < 70) {
+                            clientType = 'medium'; // 50% - средний доход
+                        } else if (rnd < 90) {
+                            clientType = 'high'; // 20% - высокий доход
+                        } else {
+                            clientType = 'vip'; // 10% - VIP клиенты
+                        }
+                        
+                        // Генерируем матрицу решений в зависимости от типа клиента
+                        const matrix = generateDecisionMatrix(clientType);
+                        
+                        // Генерируем кредитный рейтинг
+                        const score = generateCreditScore(clientType, rnd);
+                        
+                        // Генерируем рекомендации
+                        const recommendation = generateRecommendation(clientType, matrix);
+                        
+                        resolve({
+                            inn: inn,
+                            clientType: clientType,
+                            score: score,
+                            matrix: matrix,
+                            recommendation: recommendation,
+                            maxAmount: getMaxAmount(matrix),
+                            minAmount: 10000,
+                            maxTerm: getMaxTerm(matrix),
+                            minTerm: 6,
+                            possibleTerms: getPossibleTerms(matrix)
+                        });
+                    }, 2500); // Имитация задержки сети
+                });
+            }
+            
+            // Генерация матрицы решений
+            function generateDecisionMatrix(clientType) {
+                const matrix = {};
+                const baseRate = getBaseRate(clientType);
+                
+                // Определяем параметры для каждого типа клиента
+                let termSteps, amountSteps, maxTerm, maxAmount;
+                
+                switch(clientType) {
+                    case 'low':
+                        termSteps = [6, 12, 24, 36];
+                        amountSteps = [50000, 100000, 200000, 300000];
+                        break;
+                    case 'medium':
+                        termSteps = [6, 12, 24, 36, 48, 60];
+                        amountSteps = [100000, 300000, 500000, 1000000, 1500000];
+                        break;
+                    case 'high':
+                        termSteps = [6, 12, 24, 36, 48, 60, 84];
+                        amountSteps = [300000, 500000, 1000000, 2000000, 3000000, 5000000];
+                        break;
+                    case 'vip':
+                        termSteps = [6, 12, 24, 36, 48, 60, 84, 120];
+                        amountSteps = [500000, 1000000, 2000000, 3000000, 5000000, 7000000, 10000000];
+                        break;
+                }
+                
+                // Заполняем матрицу
+                termSteps.forEach(term => {
+                    matrix[term] = {};
+                    amountSteps.forEach(amount => {
+                        // Определяем статус одобрения
+                        let status, rate;
+                        const termFactor = term / 12; // Сколько лет
+                        const amountFactor = amount / (clientType === 'low' ? 100000 : 1000000);
+                        
+                        // Вероятность одобрения уменьшается с увеличением суммы и срока
+                        const approvalChance = 1 - (0.3 * Math.log10(termFactor) + 0.4 * Math.log10(amountFactor + 1));
+                        
+                        if (Math.random() < approvalChance) {
+                            status = 'approved';
+                            // Ставка увеличивается с суммой и сроком
+                            rate = baseRate + 
+                                   Math.log10(amountFactor) * 2 + 
+                                   Math.log10(termFactor) * 1.5;
+                            rate = Math.min(rate, baseRate * 1.5); // Не более чем в 1.5 раза от базовой
+                            rate = Math.round(rate * 10) / 10; // Округляем до 0.1
+                        } else if (Math.random() < 0.3) {
+                            status = 'warning';
+                            rate = baseRate * 1.8; // Высокая ставка для рискованных займов
+                            rate = Math.round(rate * 10) / 10;
+                        } else {
+                            status = 'declined';
+                            rate = null;
+                        }
+                        
+                        matrix[term][amount] = { status, rate };
+                    });
+                });
+                
+                return matrix;
+            }
+            
+            // Базовая ставка в зависимости от типа клиента
+            function getBaseRate(clientType) {
+                switch(clientType) {
+                    case 'low': return 18;
+                    case 'medium': return 14;
+                    case 'high': return 10;
+                    case 'vip': return 8;
+                    default: return 15;
+                }
+            }
+            
+            // Генерация кредитного рейтинга
+            function generateCreditScore(clientType, rnd) {
+                switch(clientType) {
+                    case 'low': return 300 + rnd % 100; // 300-400
+                    case 'medium': return 400 + rnd % 150; // 400-550
+                    case 'high': return 550 + rnd % 150; // 550-700
+                    case 'vip': return 700 + rnd % 100; // 700-800
+                    default: return 400 + rnd % 200; // 400-600
+                }
+            }
+            
+            // Генерация рекомендации
+            function generateRecommendation(clientType, matrix) {
+                // Находим максимально возможную сумму с самым длинным сроком
+                let bestAmount = 0;
+                let bestTerm = 0;
+                let bestRate = 0;
+                
+                const terms = Object.keys(matrix).map(Number).sort((a, b) => b - a); // По убыванию
+                for (const term of terms) {
+                    const amounts = Object.keys(matrix[term]).map(Number).sort((a, b) => b - a);
+                    for (const amount of amounts) {
+                        if (matrix[term][amount].status === 'approved') {
+                            if (amount > bestAmount || (amount === bestAmount && term > bestTerm)) {
+                                bestAmount = amount;
+                                bestTerm = term;
+                                bestRate = matrix[term][amount].rate;
+                            }
+                            break; // Берем первую (максимальную) сумму для этого срока
+                        }
+                    }
+                }
+                
+                // Формируем текст рекомендации
+                let text;
+                if (bestAmount > 0) {
+                    text = `Мы можем предложить вам кредит до ${formatNumber(bestAmount)} ₽ на срок до ${bestTerm} месяцев под ${bestRate}% годовых.`;
+                    
+                    // Добавляем альтернативные варианты
+                    if (clientType !== 'low') {
+                        const altTerm = Math.floor(bestTerm / 2);
+                        const altAmount = Math.floor(bestAmount * 1.5);
+                        
+                        // Проверяем, есть ли такой вариант в матрице
+                        if (matrix[altTerm] && matrix[altTerm][altAmount] && matrix[altTerm][altAmount].status === 'approved') {
+                            text += ` Либо вы можете взять ${formatNumber(altAmount)} ₽ на ${altTerm} месяцев.`;
+                        }
+                    }
+                } else {
+                    text = 'К сожалению, по вашим данным мы не можем предложить стандартные кредитные продукты.';
+                }
+                
+                return {
+                    bestAmount,
+                    bestTerm,
+                    bestRate,
+                    text
+                };
+            }
+            
+            // Получение максимальной суммы из матрицы
+            function getMaxAmount(matrix) {
+                let max = 0;
+                for (const term in matrix) {
+                    const amounts = Object.keys(matrix[term]).map(Number);
+                    const currentMax = Math.max(...amounts);
+                    if (currentMax > max) max = currentMax;
+                }
+                return max;
+            }
+            
+            // Получение максимального срока из матрицы
+            function getMaxTerm(matrix) {
+                const terms = Object.keys(matrix).map(Number);
+                return Math.max(...terms);
+            }
+            
+            // Получение возможных сроков из матрицы
+            function getPossibleTerms(matrix) {
+                return Object.keys(matrix).map(Number).sort((a, b) => a - b);
+            }
+            
+            // Отрисовка матрицы решений
+            function renderDecisionMatrix(matrix) {
+                // Очищаем таблицу
+                decisionMatrix.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Срок \ Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                
+                // Получаем все уникальные суммы из матрицы
+                const allAmounts = new Set();
+                for (const term in matrix) {
+                    for (const amount in matrix[term]) {
+                        allAmounts.add(parseInt(amount));
+                    }
+                }
+                
+                const sortedAmounts = Array.from(allAmounts).sort((a, b) => a - b);
+                
+                // Добавляем заголовки с суммами
+                const headerRow = decisionMatrix.querySelector('thead tr');
+                sortedAmounts.forEach(amount => {
+                    const th = document.createElement('th');
+                    th.textContent = `${formatNumber(amount)} ₽`;
+                    headerRow.appendChild(th);
+                });
+                
+                // Добавляем строки с данными
+                const tbody = decisionMatrix.querySelector('tbody');
+                const sortedTerms = Object.keys(matrix).map(Number).sort((a, b) => a - b);
+                
+                sortedTerms.forEach(term => {
+                    const row = document.createElement('tr');
+                    
+                    // Ячейка с сроком
+                    const termCell = document.createElement('td');
+                    termCell.textContent = `${term} мес`;
+                    row.appendChild(termCell);
+                    
+                    // Ячейки с решениями
+                    sortedAmounts.forEach(amount => {
+                        const cell = document.createElement('td');
+                        
+                        if (matrix[term][amount]) {
+                            const decision = matrix[term][amount];
+                            cell.classList.add(decision.status);
+                            
+                            if (decision.status === 'approved') {
+                                cell.textContent = `${decision.rate}%`;
+                                cell.title = `Одобрено под ${decision.rate}% годовых`;
+                            } else if (decision.status === 'warning') {
+                                cell.textContent = `${decision.rate}%`;
+                                cell.title = `Под вопросом, ставка ${decision.rate}%`;
+                            } else {
+                                cell.textContent = '✖';
+                                cell.title = 'Отклонено';
+                            }
+                        } else {
+                            cell.textContent = '-';
+                            cell.title = 'Недоступно';
+                        }
+                        
+                        row.appendChild(cell);
+                    });
+                    
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // Отрисовка кнопок выбора срока
+            function renderTermOptions(terms) {
+                termOptions.innerHTML = '';
+                terms.forEach(term => {
+                    const button = document.createElement('div');
+                    button.className = 'term-option';
+                    if (term === currentTerm) button.classList.add('active');
+                    button.textContent = `${term} мес`;
+                    button.dataset.term = term;
+                    
+                    button.addEventListener('click', function() {
+                        loanTerm.value = term;
+                        updateValues();
+                    });
+                    
+                    termOptions.appendChild(button);
+                });
+            }
+            
+            // Расчет аннуитетного платежа
+            function calculateAnnuityPayment(amount, termMonths, yearlyRate) {
+                const monthlyRate = yearlyRate / 100 / 12;
+                const payment = amount * monthlyRate * Math.pow(1 + monthlyRate, termMonths) / 
+                               (Math.pow(1 + monthlyRate, termMonths) - 1);
+                return payment;
+            }
+            
+            // Обработчик кнопки проверки ИНН
+            getLimitsBtn.addEventListener('click', function() {
+                let inn = document.getElementById('inn').value.trim();
+                
+                // Если поле пустое, генерируем случайный ИНН
+                if (!inn) {
+                    inn = generateRandomINN();
+                    document.getElementById('inn').value = inn;
+                }
+                
+                // Проверка формата ИНН
+                if (!/^\d{10}$|^\d{12}$/.test(inn)) {
+                    errorMessage.textContent = 'ИНН должен содержать 10 или 12 цифр';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                // Показываем индикатор загрузки
+                loading.style.display = 'block';
+                errorMessage.style.display = 'none';
+                getLimitsBtn.disabled = true;
+                
+                // Имитируем запрос к скоринговой системе
+                getScoringData(inn)
+                    .then(data => {
+                        creditData = data;
+                        
+                        // Устанавливаем полученные лимиты
+                        loanAmount.min = data.minAmount;
+                        loanAmount.max = data.maxAmount;
+                        loanAmount.value = Math.min(500000, data.maxAmount);
+                        
+                        loanTerm.min = data.minTerm;
+                        loanTerm.max = data.maxTerm;
+                        loanTerm.value = data.recommendation.bestTerm || 36;
+                        
+                        // Обновляем отображаемые значения
+                        minAmountValue.textContent = `${formatNumber(data.minAmount)} ₽`;
+                        maxAmountValue.textContent = `${formatNumber(data.maxAmount)} ₽`;
+                        minTermValue.textContent = `${data.minTerm} мес`;
+                        maxTermValue.textContent = `${data.maxTerm} мес`;
+                        
+                        // Обновляем кредитный рейтинг
+                        creditScore.textContent = `${data.score} (${getScoreDescription(data.score)})`;
+                        
+                        // Отрисовываем матрицу решений
+                        renderDecisionMatrix(data.matrix);
+                        
+                        // Отрисовываем кнопки выбора срока
+                        renderTermOptions(data.possibleTerms);
+                        
+                        // Показываем рекомендацию
+                        recommendationText.textContent = data.recommendation.text;
+                        
+                        // Показываем калькулятор
+                        calculator.style.display = 'block';
+                        result.style.display = 'none';
+                        
+                        // Обновляем значения
+                        updateValues();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        errorMessage.textContent = error.message || 'Произошла ошибка при проверке ИНН';
+                        errorMessage.style.display = 'block';
+                    })
+                    .finally(() => {
+                        loading.style.display = 'none';
+                        getLimitsBtn.disabled = false;
+                    });
+            });
+            
+            // Описание кредитного рейтинга
+            function getScoreDescription(score) {
+                if (score < 350) return 'Низкий';
+                if (score < 500) return 'Удовлетворительный';
+                if (score < 650) return 'Хороший';
+                if (score < 750) return 'Очень хороший';
+                return 'Отличный';
+            }
+            
+            // Обработчик кнопки расчета
+            calculateBtn.addEventListener('click', function() {
+                const amount = parseInt(loanAmount.value);
+                const term = parseInt(loanTerm.value);
+                
+                // Расчет платежей
+                const monthly = calculateAnnuityPayment(amount, term, currentRate);
+                const total = monthly * term;
+                const overpay = total - amount;
+                
+                // Отображение результатов
+                monthlyPayment.textContent = `${formatNumber(Math.round(monthly))} ₽`;
+                totalPayment.textContent = `${formatNumber(Math.round(total))} ₽`;
+                overpayment.textContent = `${formatNumber(Math.round(overpay))} ₽`;
+                interestRateEl.textContent = `${currentRate}% годовых`;
+                
+                // Показываем результаты
+                result.style.display = 'block';
+            });
+            
+            // Обновление значений при перемещении слайдеров
+            loanAmount.addEventListener('input', updateValues);
+            loanTerm.addEventListener('input', updateValues);
+            
+            // Инициализация
+            updateValues();
+        });
+    </script>
+</body>
+</html>
